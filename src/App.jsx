@@ -45,6 +45,7 @@ function App() {
       await axios.patch(`/api/todos/${data?.id}`, {
         completed: !data?.completed,
         is_editing: data?.is_editing,
+        task: data?.task,
       });
       getAllTodos();
     } catch (err) {
@@ -53,18 +54,28 @@ function App() {
   };
 
   const handleEdit = async (data) => {
-    try {
-      await axios.patch(`/api/todos/${data?.id}`, {
-        completed: data?.completed,
-        is_editing: false,
-      });
-      const response = await axios.get(`/api/todos/${data?.id}`);
-      console.log(response);
-      // setEditTask(response.data);
-      getAllTodos();
-    } catch (err) {
-      console.log(err);
+    const response = await axios.get(`/api/todos/${data?.id}`);
+    setEditTask(response?.data[0]?.task);
+    if (response.data[0].task) {
+      try {
+        await axios.patch(`/api/todos/${data?.id}`, {
+          task: data?.task,
+          completed: data?.completed,
+          is_editing: true,
+        });
+        getAllTodos();
+      } catch (err) {
+        console.log(err);
+      }
     }
+  };
+
+  const handleSubmits = async (data) => {
+    await axios.patch(`/api/todos/${data?.id}`, {
+      task: editTask,
+      is_editing: false,
+    });
+    getAllTodos();
   };
 
   const getAllTodos = async () => {
@@ -110,7 +121,9 @@ function App() {
                       onChange={(e) => setEditTask(e.target.value)}
                       value={editTask}
                     />
-                    <div className="edit-save">
+                    <div
+                      className="edit-save"
+                      onClick={() => handleSubmits(data)}>
                       <FaRegSave />
                     </div>
                   </>
@@ -123,6 +136,9 @@ function App() {
                 <button onClick={() => handleDelete(data.id)}>
                   <MdDelete />
                 </button>
+                {/* <button onClick={() => handleEdit(data)}>
+                  <MdEdit />
+                </button> */}
                 {!data?.is_editing && (
                   <button onClick={() => handleEdit(data)}>
                     <MdEdit />
